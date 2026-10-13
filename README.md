@@ -9,20 +9,6 @@
 <游戏目录>\reframework\plugins\REF-IME.dll
 ```
 
-## GitHub Actions 构建
-
-推送 `vN.N.N` 格式标签（如 `v0.2.0`）自动构建。也可以在 **Actions → Build tag → Run workflow** 输入已存在的标签，构建该标签对应的代码。手动触发需将工作流提交到默认分支。
-
-产物名为 `REF-IME-vN.N.N-windows-x64.zip`，只包含 `reframework/plugins/REF-IME.dll`。解压到游戏根目录即可。工作流仅上传构建产物，不自动创建 Release。
-
-本地使用相同构建和打包脚本：
-
-```powershell
-.\tools\bootstrap.ps1
-.\tools\build.ps1 -SkipTests -Version 0.2.0
-.\tools\package.ps1 -Tag v0.2.0
-```
-
 ## 源码
 
 | 文件 | 职责 |
