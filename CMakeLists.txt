@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-set(REF_IME_VERSION "0.2.0" CACHE STRING "Plugin release version supplied by a Git tag")
+set(REF_IME_VERSION "1.0.0" CACHE STRING "Plugin release version supplied by a Git tag")
 if(NOT REF_IME_VERSION MATCHES "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$")
     message(FATAL_ERROR "REF_IME_VERSION must have the form N.N.N")
 endif()

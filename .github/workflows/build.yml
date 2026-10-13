@@ -7,12 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing Git tag to build (e.g. v0.2.0)'
+        description: 'Existing Git tag to build (e.g. v1.0.0)'
         required: true
         type: string
 
 permissions:
-  contents: read
+  contents: write
+
+# 同一标签的构建串行发布，避免重复运行同时创建 Release 或替换相同资产。
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -33,7 +38,7 @@ jobs:
         run: |
           $tag = if ($env:EVENT_NAME -eq 'workflow_dispatch') { $env:REQUESTED_TAG } else { $env:PUSH_TAG }
           if ($tag -cnotmatch '\Av(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\z') {
-            throw 'Tag must have the form vN.N.N, e.g. v0.2.0.'
+            throw 'Tag must have the form vN.N.N, e.g. v1.0.0.'
           }
           "tag=$tag" >> $env:GITHUB_OUTPUT
           "version=$($tag.Substring(1))" >> $env:GITHUB_OUTPUT
@@ -65,3 +70,27 @@ jobs:
           if-no-files-found: error
           retention-days: 30
           archive: false
+
+      # 直接使用 runner 自带 gh；即使手动构建旧标签，也执行默认分支的新版发布步骤。
+      - name: Publish ZIP to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $asset = Join-Path $PWD "dist/REF-IME-$($env:RELEASE_TAG)-windows-x64.zip"
+          if (-not (Test-Path -LiteralPath $asset -PathType Leaf)) { throw 'Release ZIP is missing.' }
+          # 先确认标签确实存在；不能用 release create 隐式生成指向错误提交的新标签。
+          gh api "repos/$env:GH_REPO/git/ref/tags/$env:RELEASE_TAG" --silent
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot access the requested Git tag.' }
+          gh release view $env:RELEASE_TAG --repo $env:GH_REPO --json url | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:RELEASE_TAG $asset --repo $env:GH_REPO --clobber
+          } else {
+            gh release create $env:RELEASE_TAG $asset --repo $env:GH_REPO --verify-tag --title "REF-IME $env:RELEASE_TAG" --generate-notes
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to publish the Release ZIP.' }
+          $releaseUrl = gh release view $env:RELEASE_TAG --repo $env:GH_REPO --json url --jq .url
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot verify the published Release.' }
+          "Release: $releaseUrl" >> $env:GITHUB_STEP_SUMMARY
