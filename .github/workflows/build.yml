@@ -1,0 +1,67 @@
+name: Build tag
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing Git tag to build (e.g. v0.2.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Windows x64 DLL
+    runs-on: windows-2022
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      # 将外部输入经环境变量传给 PowerShell，验证后再用于 checkout 和文件名。
+      - name: Validate tag
+        id: version
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_TAG: ${{ github.ref_name }}
+        run: |
+          $tag = if ($env:EVENT_NAME -eq 'workflow_dispatch') { $env:REQUESTED_TAG } else { $env:PUSH_TAG }
+          if ($tag -cnotmatch '\Av(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\z') {
+            throw 'Tag must have the form vN.N.N, e.g. v0.2.0.'
+          }
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "version=$($tag.Substring(1))" >> $env:GITHUB_OUTPUT
+
+      - name: Check out the requested tag
+        uses: actions/checkout@v5
+        with:
+          ref: refs/tags/${{ steps.version.outputs.tag }}
+          persist-credentials: false
+
+      - name: Fetch locked source dependencies
+        run: ./tools/bootstrap.ps1
+
+      # 测试为本地开发内容；CI 只编译发布 DLL，避免依赖被本机忽略的 tests/。
+      - name: Build Release DLL
+        env:
+          PLUGIN_VERSION: ${{ steps.version.outputs.version }}
+        run: ./tools/build.ps1 -SkipTests -Version $env:PLUGIN_VERSION
+
+      - name: Package and verify DLL-only ZIP
+        env:
+          BUILD_TAG: ${{ steps.version.outputs.tag }}
+        run: ./tools/package.ps1 -Tag $env:BUILD_TAG
+
+      - name: Upload ZIP
+        uses: actions/upload-artifact@v7
+        with:
+          path: dist/REF-IME-${{ steps.version.outputs.tag }}-windows-x64.zip
+          if-no-files-found: error
+          retention-days: 30
+          archive: false

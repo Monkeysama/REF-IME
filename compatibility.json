@@ -1,0 +1,33 @@
+{
+  "scope": "all REFramework RE Engine game targets",
+  "minimumPluginApi": "1.15.0",
+  "imguiVersion": "1.92.0",
+  "imguiWchar32": true,
+  "renderers": ["D3D11", "D3D12"],
+  "gameWhitelist": false,
+  "dllHashWhitelist": false,
+  "requiredExports": [
+    "igGetVersion",
+    "igDebugCheckVersionAndDataLayout",
+    "ImFontGlyphRangesBuilder_ImFontGlyphRangesBuilder",
+    "ImFontGlyphRangesBuilder_destroy",
+    "igGetCurrentContext",
+    "igGetIO_ContextPtr",
+    "igGetPlatformIO_ContextPtr",
+    "igGetActiveID",
+    "igGetInputTextState",
+    "ImGuiIO_AddKeyEvent",
+    "ImGuiIO_AddFocusEvent",
+    "igGetForegroundDrawList_Nil",
+    "ImDrawList_AddText_Vec2",
+    "ImDrawList_AddRectFilled",
+    "ImDrawList_AddLine",
+    "igCalcTextSize",
+    "igTreeNode_Str",
+    "igTreePop",
+    "igCheckbox",
+    "igTextUnformatted",
+    "igMemAlloc",
+    "igMemFree"
+  ]
+}

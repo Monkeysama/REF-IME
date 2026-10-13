@@ -1,0 +1,41 @@
+# 下载依赖、构建与发布产物
+/.deps/
+/build/
+/build-*/
+/cmake-build-*/
+/out/
+/dist/
+
+# 本机路径、验证记录、构建收据及助手排错记录
+/.local/
+/.learnings/
+AGENTS.md
+tests/
+docs/
+
+# Visual Studio / 编辑器的个人配置
+/.vs/
+/.vscode/
+/.idea/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+CMakeUserPresets.json
+
+# 临时输出与崩溃诊断；测试源码、依赖锁文件和许可证仍应提交
+*.log
+*.dmp
+*.tmp
+*.bak
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.dll
+*.exe
+*.zip
+Thumbs.db
+.DS_Store
+
